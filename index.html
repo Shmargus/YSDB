@@ -798,44 +798,69 @@
         }
 
         async function loadData() {
-            document.getElementById('monsterTableBody').innerHTML =
-                '<tr><td colspan="5" class="message">Loading...</td></tr>';
+    const tbody = document.getElementById('monsterTableBody');
+    tbody.innerHTML =
+        '<tr><td colspan="5" class="message">Loading monsters.json…</td></tr>';
 
-            try {
-                const response = await fetch(DATA_URL);
-                if (!response.ok) throw new Error('Failed to load');
+    if (!location.protocol.startsWith('http')) {
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" class="message error">
+                This page must be served via HTTP or HTTPS.<br>
+                Use a local server or GitHub Pages.
+            </td>
+        </tr>`;
+    return;
+}
 
-                const data = await response.json();
 
-                // Handle both old format (array) and new format (object with metadata)
-                if (Array.isArray(data)) {
-                    monsters = data;
-                } else {
-                    monsters = data.monsters || [];
-                    lastUpdated = data.lastUpdated;
-                    if (lastUpdated) {
-                        const date = new Date(lastUpdated);
-                        document.getElementById('lastUpdated').textContent =
-                            `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
-                    }
-                }
+    try {
+        const response = await fetch(`${DATA_URL}?ts=${Date.now()}`, {
+            cache: 'no-store'
+        });
 
-                applyFiltersAndSort();
+        if (response.status === 404) {
+            throw new Error('NOT_FOUND');
+        }
 
-                // Check if URL has monster ID or map name
-                const urlParams = new URLSearchParams(window.location.search);
-                const monsterId = urlParams.get('monster');
-                const mapName = urlParams.get('map');
-                if (monsterId) {
-                    showMonsterDetail(parseInt(monsterId), false);
-                } else if (mapName) {
-                    showMapDetail(decodeURIComponent(mapName), false);
-                }
-            } catch (error) {
-                document.getElementById('monsterTableBody').innerHTML =
-                    '<tr><td colspan="5" class="message error">Could not load data/monsters.json<br>Run: node fetch-data.js</td></tr>';
+        if (!response.ok) {
+            throw new Error(`HTTP_${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+            monsters = data;
+        } else {
+            monsters = data.monsters || [];
+            lastUpdated = data.lastUpdated;
+            if (lastUpdated) {
+                const date = new Date(lastUpdated);
+                document.getElementById('lastUpdated').textContent =
+                    `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
             }
         }
+
+        applyFiltersAndSort();
+    } catch (err) {
+        let message = 'Unknown error loading monsters.json';
+
+        if (err.message === 'NOT_FOUND') {
+            message = 'data/monsters.json not found.<br>File does not exist on this host.';
+        } else if (err.message.startsWith('HTTP_')) {
+            message = `Server error while loading JSON (${err.message.replace('HTTP_', '')})`;
+        }
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="message error">
+                    ${message}
+                </td>
+            </tr>`;
+        console.error(err);
+    }
+}
+
 
         function getFilteredMonsters() {
             const search = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -1053,7 +1078,7 @@
         function showListView(pushState = true) {
             // Update URL
             if (pushState) {
-                history.pushState({}, '', window.location.pathname);
+                history.pushState({}, '', './');
             }
 
             // Update page title
