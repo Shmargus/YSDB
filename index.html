@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Database</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #1a1a2e;
+            color: #eee;
+            line-height: 1.6;
+        }
+
+        header {
+            background: #16213e;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+        }
+
+        header h1 { color: #e94560; font-size: 2em; }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .search-box { margin-bottom: 15px; }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            background-color: #16213e;
+            color: #eee;
+            outline: none;
+        }
+
+        .search-box input:focus { border-color: #e94560; }
+
+        .result-count {
+            margin-bottom: 10px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .monster-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #16213e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .monster-table th,
+        .monster-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .monster-table th {
+            background-color: #0f3460;
+            color: #e94560;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .monster-table tbody tr:hover { background-color: #1a1a2e; }
+        .monster-name { color: #4ecdc4; font-weight: 500; }
+
+        .location-tag {
+            display: inline-block;
+            background-color: #0f3460;
+            color: #74b9ff;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .message {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+
+        .message.error { color: #e94560; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Monster Database</h1>
+    </header>
+
+    <main>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search monster name...">
+        </div>
+
+        <div class="result-count" id="resultCount"></div>
+
+        <table class="monster-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>HP</th>
+                    <th>EXP</th>
+                    <th>Locations</th>
+                </tr>
+            </thead>
+            <tbody id="monsterTableBody">
+            </tbody>
+        </table>
+    </main>
+
+    <script>
+        const DATA_URL = 'data/monsters.json';
+
+        let monsters = [];
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        // Search while typing
+        document.getElementById('searchInput').addEventListener('input', filterMonsters);
+
+        async function loadData() {
+            document.getElementById('monsterTableBody').innerHTML =
+                '<tr><td colspan="4" class="message">Loading...</td></tr>';
+
+            try {
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error('Failed to load');
+
+                monsters = await response.json();
+                displayMonsters(monsters);
+            } catch (error) {
+                document.getElementById('monsterTableBody').innerHTML =
+                    '<tr><td colspan="4" class="message error">Could not load data/monsters.json</td></tr>';
+            }
+        }
+
+        function filterMonsters() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const filtered = search
+                ? monsters.filter(m => m.name.toLowerCase().includes(search))
+                : monsters;
+            displayMonsters(filtered);
+        }
+
+        function displayMonsters(list) {
+            document.getElementById('resultCount').textContent = `${list.length} monsters`;
+
+            if (list.length === 0) {
+                document.getElementById('monsterTableBody').innerHTML =
+                    '<tr><td colspan="4" class="message">No monsters found.</td></tr>';
+                return;
+            }
+
+            document.getElementById('monsterTableBody').innerHTML = list.map(m => `
+                <tr>
+                    <td class="monster-name">${m.name}</td>
+                    <td>${m.hp.toLocaleString()}</td>
+                    <td>${m.exp.toLocaleString()}</td>
+                    <td>${m.locations.map(loc => `<span class="location-tag">${loc}</span>`).join('')}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

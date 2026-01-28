@@ -1,0 +1,22 @@
+[
+  { "name": "Slime", "hp": 50, "exp": 10, "locations": ["Green Fields", "Starter Cave"] },
+  { "name": "Goblin", "hp": 150, "exp": 35, "locations": ["Forest Path", "Goblin Camp"] },
+  { "name": "Wolf", "hp": 280, "exp": 55, "locations": ["Dark Forest", "Mountain Trail"] },
+  { "name": "Skeleton Warrior", "hp": 400, "exp": 85, "locations": ["Cursed Graveyard", "Abandoned Castle"] },
+  { "name": "Fire Imp", "hp": 320, "exp": 110, "locations": ["Volcanic Cave", "Demon Outpost"] },
+  { "name": "Ice Golem", "hp": 800, "exp": 180, "locations": ["Frozen Tundra", "Ice Cavern"] },
+  { "name": "Harpy", "hp": 450, "exp": 145, "locations": ["Sky Peaks", "Cliff Nests"] },
+  { "name": "Orc Berserker", "hp": 950, "exp": 250, "locations": ["Orc Fortress", "Battlefield Ruins"] },
+  { "name": "Vampire Bat", "hp": 380, "exp": 165, "locations": ["Dark Cave", "Vampire Castle"] },
+  { "name": "Stone Guardian", "hp": 1500, "exp": 350, "locations": ["Ancient Temple", "Ruins of Eldar"] },
+  { "name": "Thunder Serpent", "hp": 1200, "exp": 420, "locations": ["Storm Valley", "Thunder Peak"] },
+  { "name": "Lich", "hp": 2000, "exp": 600, "locations": ["Necropolis", "Tower of Shadows"] },
+  { "name": "Phoenix Hatchling", "hp": 1100, "exp": 520, "locations": ["Volcanic Nest", "Fire Sanctuary"] },
+  { "name": "Treant", "hp": 1800, "exp": 300, "locations": ["Ancient Grove", "Enchanted Forest"] },
+  { "name": "Mermaid", "hp": 900, "exp": 380, "locations": ["Coral Reef", "Sunken City"] },
+  { "name": "Shadow Assassin", "hp": 1400, "exp": 700, "locations": ["Shadow Realm", "Assassin Guild"] },
+  { "name": "Dragon Whelp", "hp": 3000, "exp": 1000, "locations": ["Dragon's Lair", "Scorched Plains"] },
+  { "name": "Frost Giant", "hp": 5000, "exp": 1200, "locations": ["Frozen Throne", "Giant's Keep"] },
+  { "name": "Demon Lord", "hp": 10000, "exp": 3000, "locations": ["Hell Gate", "Demon Castle"] },
+  { "name": "Elder Dragon", "hp": 50000, "exp": 10000, "locations": ["Dragon Peak", "World's End"] }
+]
