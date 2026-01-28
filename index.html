@@ -3,30 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monster Database</title>
+    <title>Yugen Saga - Monster Database</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: #1a1a2e;
-            color: #eee;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: linear-gradient(180deg, #4a5a4a 0%, #3d4a3d 100%);
+            min-height: 100vh;
+            color: #e8dcc8;
             line-height: 1.6;
         }
 
         header {
-            background: #16213e;
+            background: #252342;
             padding: 20px;
             text-align: center;
-            border-bottom: 3px solid #e94560;
+            border-bottom: 2px solid #2a2845;
         }
 
-        header h1 { color: #e94560; font-size: 2em; }
+        header h1 {
+            color: #d4a574;
+            font-size: 2.2em;
+            font-weight: normal;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-variant: small-caps;
+        }
 
         main {
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 0 auto;
             padding: 20px;
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(180deg, #4a5a4a 0%, #3d4a3d 100%);
+            padding-bottom: 10px;
+            margin: -20px -20px 15px -20px;
+            padding: 20px 20px 15px 20px;
         }
 
         .search-box { margin-bottom: 15px; }
@@ -35,125 +53,865 @@
             width: 100%;
             padding: 12px 20px;
             font-size: 16px;
-            border: 2px solid #0f3460;
-            border-radius: 5px;
-            background-color: #16213e;
-            color: #eee;
+            border: 2px solid #3d3a5c;
+            border-radius: 25px;
+            background-color: #2a2845;
+            color: #e8dcc8;
             outline: none;
+            font-family: inherit;
         }
 
-        .search-box input:focus { border-color: #e94560; }
+        .search-box input::placeholder { color: #8a8a9a; }
+        .search-box input:focus { border-color: #d4a574; }
 
         .result-count {
             margin-bottom: 10px;
-            color: #aaa;
+            color: #a8c8a8;
             font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .last-updated {
+            color: #8a8a9a;
+            font-size: 12px;
+        }
+
+        .table-container {
+            overflow-x: auto;
         }
 
         .monster-table {
             width: 100%;
             border-collapse: collapse;
-            background-color: #16213e;
+            background-color: rgba(37, 35, 66, 0.85);
             border-radius: 8px;
             overflow: hidden;
+            min-width: 700px;
         }
 
         .monster-table th,
         .monster-table td {
-            padding: 12px 15px;
+            padding: 10px 12px;
             text-align: left;
-            border-bottom: 1px solid #0f3460;
+            border-bottom: 1px solid #3d3a5c;
         }
 
         .monster-table th {
-            background-color: #0f3460;
-            color: #e94560;
+            background-color: #2a2845;
+            color: #d4a574;
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 13px;
+            font-size: 11px;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            letter-spacing: 1px;
         }
 
-        .monster-table tbody tr:hover { background-color: #1a1a2e; }
-        .monster-name { color: #4ecdc4; font-weight: 500; }
+        .monster-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
 
-        .location-tag {
+        .monster-table th.sortable:hover {
+            background-color: #3a3758;
+            color: #e8c8a4;
+        }
+
+        .monster-table th .sort-icon {
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        .monster-table th.sort-asc .sort-icon,
+        .monster-table th.sort-desc .sort-icon {
+            opacity: 1;
+        }
+
+        .monster-table tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .monster-table tbody tr:hover {
+            background-color: rgba(58, 55, 88, 0.6);
+        }
+
+        .monster-name {
+            color: #c9a86c;
+            font-weight: 500;
+        }
+
+        .stat {
+            text-align: right;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            color: #e8dcc8;
+        }
+
+        .map-tag {
             display: inline-block;
-            background-color: #0f3460;
-            color: #74b9ff;
+            background-color: #4a5a4a;
+            color: #a8c8a8;
             padding: 3px 8px;
             border-radius: 12px;
-            font-size: 12px;
-            margin: 2px;
+            font-size: 11px;
+            margin: 1px;
+            border: 1px solid #5a6a5a;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .map-tag:hover {
+            background-color: #5a6a5a;
+            border-color: #7a8a7a;
+            color: #c8e8c8;
         }
 
         .message {
             text-align: center;
             padding: 40px;
-            color: #aaa;
+            color: #a8a898;
         }
 
-        .message.error { color: #e94560; }
+        .message.error { color: #c87878; }
+
+        /* Filters */
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: rgba(37, 35, 66, 0.85);
+            border-radius: 8px;
+            border: 1px solid #3d3a5c;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            color: #d4a574;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px;
+            font-size: 13px;
+            border: 1px solid #3d3a5c;
+            border-radius: 4px;
+            background-color: #2a2845;
+            color: #e8dcc8;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .filter-group input::placeholder { color: #8a8a9a; }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: #d4a574;
+        }
+
+        .filter-group .range-inputs {
+            display: flex;
+            gap: 5px;
+        }
+
+        .filter-group .range-inputs input {
+            width: 50%;
+        }
+
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .filter-actions button {
+            padding: 10px 20px;
+            font-size: 13px;
+            background-color: #2a2845;
+            color: #e8dcc8;
+            border: 2px solid #3d3a5c;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .filter-actions button:hover {
+            background-color: #3a3758;
+            border-color: #d4a574;
+            color: #d4a574;
+        }
+
+        /* Detail View */
+        .detail-view {
+            display: none;
+        }
+
+        .detail-view.active {
+            display: block;
+        }
+
+        .list-view.hidden {
+            display: none;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            background-color: #2a2845;
+            color: #e8dcc8;
+            border: 2px solid #3d3a5c;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #3a3758;
+            border-color: #d4a574;
+            color: #d4a574;
+        }
+
+        .monster-detail {
+            background-color: rgba(37, 35, 66, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #3d3a5c;
+        }
+
+        .monster-detail h2 {
+            color: #d4a574;
+            font-size: 2em;
+            font-weight: normal;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .monster-detail .monster-id {
+            color: #8a8a9a;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: #2a2845;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #3d3a5c;
+        }
+
+        .stat-card .stat-label {
+            font-size: 11px;
+            color: #8a8a9a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8em;
+            color: #d4a574;
+            font-family: 'Consolas', monospace;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h3 {
+            color: #d4a574;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3d3a5c;
+        }
+
+        .maps-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .maps-list .map-tag {
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+
+        /* Item Drops */
+        .drops-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .drop-tag {
+            display: inline-block;
+            background-color: #5a4a3a;
+            color: #d4a574;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            border: 1px solid #7a6a5a;
+        }
+
+        .no-drops {
+            color: #8a8a9a;
+            font-style: italic;
+        }
+
+        /* Monster Sprite */
+        .monster-header {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .sprite-container {
+            flex-shrink: 0;
+            width: 150px;
+            height: 150px;
+            background-color: #2a2845;
+            border-radius: 8px;
+            border: 1px solid #3d3a5c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .sprite-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        .sprite-container.hidden {
+            display: none;
+        }
+
+        .monster-info {
+            flex: 1;
+        }
+
+        .monster-info h2 {
+            margin-bottom: 5px;
+        }
+
+        /* Map Detail View */
+        .map-detail {
+            background-color: rgba(37, 35, 66, 0.9);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid #3d3a5c;
+        }
+
+        .map-detail h2 {
+            color: #a8c8a8;
+            font-size: 1.8em;
+            font-weight: normal;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .map-monsters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .map-monster-card {
+            background-color: #2a2845;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #3d3a5c;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .map-monster-card:hover {
+            background-color: #3a3758;
+            border-color: #d4a574;
+        }
+
+        .map-monster-card .name {
+            color: #c9a86c;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .map-monster-card .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #a8a8b8;
+        }
+
+        .map-monster-card .stats span {
+            font-family: 'Consolas', monospace;
+        }
+
+        /* Compare Feature */
+        .compare-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #252342;
+            border-top: 2px solid #3d3a5c;
+            padding: 15px 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 200;
+        }
+
+        .compare-bar.active {
+            display: flex;
+        }
+
+        .compare-slot {
+            background-color: #2a2845;
+            border: 2px dashed #3d3a5c;
+            border-radius: 8px;
+            padding: 10px 20px;
+            min-width: 150px;
+            text-align: center;
+            color: #8a8a9a;
+        }
+
+        .compare-slot.filled {
+            border-style: solid;
+            border-color: #d4a574;
+            color: #c9a86c;
+        }
+
+        .compare-slot .remove {
+            margin-left: 10px;
+            color: #c87878;
+            cursor: pointer;
+        }
+
+        .compare-btn {
+            padding: 12px 30px;
+            font-size: 14px;
+            background-color: #d4a574;
+            color: #252342;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .compare-btn:hover {
+            background-color: #e8c8a4;
+        }
+
+        .compare-btn:disabled {
+            background-color: #5a5a6a;
+            color: #8a8a9a;
+            cursor: not-allowed;
+        }
+
+        .add-compare-btn {
+            padding: 6px 12px;
+            font-size: 11px;
+            background-color: transparent;
+            color: #d4a574;
+            border: 1px solid #d4a574;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 10px;
+            transition: all 0.2s;
+        }
+
+        .add-compare-btn:hover {
+            background-color: #d4a574;
+            color: #252342;
+        }
+
+        .add-compare-btn.added {
+            background-color: #4a5a4a;
+            border-color: #4a5a4a;
+            color: #a8c8a8;
+        }
+
+        /* Compare View */
+        .compare-view {
+            display: none;
+        }
+
+        .compare-view.active {
+            display: block;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .compare-monster {
+            background-color: rgba(37, 35, 66, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #3d3a5c;
+        }
+
+        .compare-monster h3 {
+            color: #d4a574;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+
+        .compare-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .compare-stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #2a2845;
+            border-radius: 6px;
+        }
+
+        .compare-stat-row .label {
+            color: #8a8a9a;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .compare-stat-row .value {
+            color: #d4a574;
+            font-family: 'Consolas', monospace;
+            font-size: 1.1em;
+        }
+
+        .compare-stat-row .value.higher {
+            color: #a8c8a8;
+        }
+
+        .compare-stat-row .value.lower {
+            color: #c87878;
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>Monster Database</h1>
+        <h1>Yugen Saga Monster Database</h1>
     </header>
 
     <main>
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search monster name...">
+        <!-- List View -->
+        <div id="listView" class="list-view">
+            <div class="sticky-header">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Quick search (name or map)...">
+                </div>
+
+                <div class="filters">
+                <div class="filter-group">
+                    <label>Name</label>
+                    <input type="text" id="filterName" placeholder="Filter name...">
+                </div>
+                <div class="filter-group">
+                    <label>Level</label>
+                    <div class="range-inputs">
+                        <input type="number" id="filterLevelMin" placeholder="Min">
+                        <input type="number" id="filterLevelMax" placeholder="Max">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>HP</label>
+                    <div class="range-inputs">
+                        <input type="number" id="filterHpMin" placeholder="Min">
+                        <input type="number" id="filterHpMax" placeholder="Max">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>EXP</label>
+                    <div class="range-inputs">
+                        <input type="number" id="filterExpMin" placeholder="Min">
+                        <input type="number" id="filterExpMax" placeholder="Max">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Map</label>
+                    <input type="text" id="filterMap" placeholder="Filter map...">
+                </div>
+                <div class="filter-actions">
+                    <button id="clearFilters">Clear Filters</button>
+                </div>
+            </div>
+
+                <div class="result-count">
+                    <span id="resultCount"></span>
+                    <span class="last-updated" id="lastUpdated"></span>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="monster-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="name">Name <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="level">Level <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="hp">HP <span class="sort-icon">↕</span></th>
+                            <th class="sortable" data-sort="exp">EXP <span class="sort-icon">↕</span></th>
+                            <th>Map(s)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monsterTableBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div class="result-count" id="resultCount"></div>
+        <!-- Detail View -->
+        <div id="detailView" class="detail-view">
+            <button class="back-button" onclick="showListView()">
+                ← Back to List
+            </button>
+            <div id="monsterDetail" class="monster-detail">
+            </div>
+        </div>
 
-        <table class="monster-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>HP</th>
-                    <th>EXP</th>
-                    <th>Locations</th>
-                </tr>
-            </thead>
-            <tbody id="monsterTableBody">
-            </tbody>
-        </table>
+        <!-- Map Detail View -->
+        <div id="mapDetailView" class="detail-view">
+            <button class="back-button" onclick="showListView()">
+                ← Back to List
+            </button>
+            <div id="mapDetail" class="map-detail">
+            </div>
+        </div>
+
+        <!-- Compare View -->
+        <div id="compareView" class="compare-view">
+            <button class="back-button" onclick="closeCompare()">
+                ← Back to List
+            </button>
+            <div id="compareContent">
+            </div>
+        </div>
     </main>
+
+    <!-- Compare Bar -->
+    <div id="compareBar" class="compare-bar">
+        <div class="compare-slot" id="compareSlot1">Select monster</div>
+        <span style="color: #8a8a9a;">vs</span>
+        <div class="compare-slot" id="compareSlot2">Select monster</div>
+        <button class="compare-btn" id="compareBtn" disabled onclick="showCompare()">Compare</button>
+        <button class="back-button" style="margin: 0; padding: 8px 16px;" onclick="clearCompare()">Clear</button>
+    </div>
 
     <script>
         const DATA_URL = 'data/monsters.json';
-
         let monsters = [];
+        let lastUpdated = null;
+        let currentSort = { field: 'name', dir: 'asc' };
+        let compareList = [];
 
-        // Load data on page load
         document.addEventListener('DOMContentLoaded', loadData);
 
-        // Search while typing
-        document.getElementById('searchInput').addEventListener('input', filterMonsters);
+        // Handle browser back button
+        window.addEventListener('popstate', (e) => {
+            if (e.state && e.state.monsterId) {
+                showMonsterDetail(e.state.monsterId, false);
+            } else if (e.state && e.state.mapName) {
+                showMapDetail(e.state.mapName, false);
+            } else {
+                showListView(false);
+            }
+        });
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+        document.getElementById('filterName').addEventListener('input', applyFiltersAndSort);
+        document.getElementById('filterMap').addEventListener('input', applyFiltersAndSort);
+
+        // Range filters with debounce
+        const rangeInputs = ['filterLevelMin', 'filterLevelMax', 'filterHpMin', 'filterHpMax',
+                            'filterExpMin', 'filterExpMax'];
+        rangeInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', debounce(applyFiltersAndSort, 300));
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+        // Sortable headers
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.sort;
+                if (currentSort.field === field) {
+                    currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.field = field;
+                    currentSort.dir = 'asc';
+                }
+                updateSortIndicators();
+                applyFiltersAndSort();
+            });
+        });
+
+        function debounce(fn, delay) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn(...args), delay);
+            };
+        }
 
         async function loadData() {
             document.getElementById('monsterTableBody').innerHTML =
-                '<tr><td colspan="4" class="message">Loading...</td></tr>';
+                '<tr><td colspan="5" class="message">Loading...</td></tr>';
 
             try {
                 const response = await fetch(DATA_URL);
                 if (!response.ok) throw new Error('Failed to load');
 
-                monsters = await response.json();
-                displayMonsters(monsters);
+                const data = await response.json();
+
+                // Handle both old format (array) and new format (object with metadata)
+                if (Array.isArray(data)) {
+                    monsters = data;
+                } else {
+                    monsters = data.monsters || [];
+                    lastUpdated = data.lastUpdated;
+                    if (lastUpdated) {
+                        const date = new Date(lastUpdated);
+                        document.getElementById('lastUpdated').textContent =
+                            `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                    }
+                }
+
+                applyFiltersAndSort();
+
+                // Check if URL has monster ID or map name
+                const urlParams = new URLSearchParams(window.location.search);
+                const monsterId = urlParams.get('monster');
+                const mapName = urlParams.get('map');
+                if (monsterId) {
+                    showMonsterDetail(parseInt(monsterId), false);
+                } else if (mapName) {
+                    showMapDetail(decodeURIComponent(mapName), false);
+                }
             } catch (error) {
                 document.getElementById('monsterTableBody').innerHTML =
-                    '<tr><td colspan="4" class="message error">Could not load data/monsters.json</td></tr>';
+                    '<tr><td colspan="5" class="message error">Could not load data/monsters.json<br>Run: node fetch-data.js</td></tr>';
             }
         }
 
-        function filterMonsters() {
+        function getFilteredMonsters() {
             const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const filtered = search
-                ? monsters.filter(m => m.name.toLowerCase().includes(search))
-                : monsters;
-            displayMonsters(filtered);
+            const filterName = document.getElementById('filterName').value.toLowerCase().trim();
+            const filterMap = document.getElementById('filterMap').value.toLowerCase().trim();
+
+            const levelMin = parseInt(document.getElementById('filterLevelMin').value) || null;
+            const levelMax = parseInt(document.getElementById('filterLevelMax').value) || null;
+            const hpMin = parseInt(document.getElementById('filterHpMin').value) || null;
+            const hpMax = parseInt(document.getElementById('filterHpMax').value) || null;
+            const expMin = parseInt(document.getElementById('filterExpMin').value) || null;
+            const expMax = parseInt(document.getElementById('filterExpMax').value) || null;
+
+            return monsters.filter(m => {
+                if (search && !m.name.toLowerCase().includes(search) &&
+                    !m.maps.some(map => map.toLowerCase().includes(search))) {
+                    return false;
+                }
+                if (filterName && !m.name.toLowerCase().includes(filterName)) return false;
+                if (filterMap && !m.maps.some(map => map.toLowerCase().includes(filterMap))) return false;
+                if (levelMin !== null && m.level < levelMin) return false;
+                if (levelMax !== null && m.level > levelMax) return false;
+                if (hpMin !== null && m.hp < hpMin) return false;
+                if (hpMax !== null && m.hp > hpMax) return false;
+                const expNum = parseInt(m.exp) || 0;
+                if (expMin !== null && expNum < expMin) return false;
+                if (expMax !== null && expNum > expMax) return false;
+                return true;
+            });
+        }
+
+        function sortMonsters(list) {
+            const { field, dir } = currentSort;
+            const multiplier = dir === 'asc' ? 1 : -1;
+
+            return [...list].sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                if (field === 'exp') {
+                    aVal = parseInt(aVal) || 0;
+                    bVal = parseInt(bVal) || 0;
+                }
+                if (field === 'name') {
+                    return aVal.localeCompare(bVal) * multiplier;
+                }
+                return (aVal - bVal) * multiplier;
+            });
+        }
+
+        function applyFiltersAndSort() {
+            const filtered = getFilteredMonsters();
+            const sorted = sortMonsters(filtered);
+            displayMonsters(sorted);
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                const icon = th.querySelector('.sort-icon');
+                icon.textContent = '↕';
+            });
+
+            const activeTh = document.querySelector(`th[data-sort="${currentSort.field}"]`);
+            if (activeTh) {
+                activeTh.classList.add(currentSort.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+                const icon = activeTh.querySelector('.sort-icon');
+                icon.textContent = currentSort.dir === 'asc' ? '↑' : '↓';
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterName').value = '';
+            document.getElementById('filterMap').value = '';
+            rangeInputs.forEach(id => document.getElementById(id).value = '');
+            applyFiltersAndSort();
         }
 
         function displayMonsters(list) {
@@ -161,18 +919,149 @@
 
             if (list.length === 0) {
                 document.getElementById('monsterTableBody').innerHTML =
-                    '<tr><td colspan="4" class="message">No monsters found.</td></tr>';
+                    '<tr><td colspan="5" class="message">No monsters found.</td></tr>';
                 return;
             }
 
             document.getElementById('monsterTableBody').innerHTML = list.map(m => `
-                <tr>
+                <tr onclick="showMonsterDetail(${m.id})">
                     <td class="monster-name">${m.name}</td>
-                    <td>${m.hp.toLocaleString()}</td>
-                    <td>${m.exp.toLocaleString()}</td>
-                    <td>${m.locations.map(loc => `<span class="location-tag">${loc}</span>`).join('')}</td>
+                    <td class="stat">${m.level.toLocaleString()}</td>
+                    <td class="stat">${m.hp.toLocaleString()}</td>
+                    <td class="stat">${parseInt(m.exp).toLocaleString()}</td>
+                    <td>${m.maps.map(map => `<span class="map-tag" onclick="event.stopPropagation(); showMapDetail('${map.replace(/'/g, "\\'")}')">${map}</span>`).join('')}</td>
                 </tr>
             `).join('');
+        }
+
+        function showMonsterDetail(monsterId, pushState = true) {
+            const monster = monsters.find(m => m.id === monsterId);
+            if (!monster) return;
+
+            // Update URL
+            if (pushState) {
+                history.pushState({ monsterId }, '', `?monster=${monsterId}`);
+            }
+
+            // Update page title
+            document.title = `${monster.name} - Yugen Saga Monster Database`;
+
+            // Hide list, show detail
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailView').classList.add('active');
+
+            // Render detail
+            document.getElementById('monsterDetail').innerHTML = `
+                <div class="monster-header">
+                    <div class="sprite-container" id="spriteContainer">
+                        <img id="spriteImg" alt="${monster.name}">
+                    </div>
+                    <div class="monster-info">
+                        <h2>${monster.name}</h2>
+                        <div class="monster-id">ID: ${monster.id}</div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Level</div>
+                        <div class="stat-value">${monster.level.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">HP</div>
+                        <div class="stat-value">${monster.hp.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">AC</div>
+                        <div class="stat-value">${monster.ac.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">TGH</div>
+                        <div class="stat-value">${monster.tgh}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">EXP</div>
+                        <div class="stat-value">${parseInt(monster.exp).toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Locations (${monster.maps.length})</h3>
+                    <div class="maps-list">
+                        ${monster.maps.map(map => `<span class="map-tag">${map}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Drops (${monster.drops ? monster.drops.length : 0})</h3>
+                    <div class="drops-list">
+                        ${monster.drops && monster.drops.length > 0
+                            ? monster.drops.map(drop => `<span class="drop-tag">${drop.name}</span>`).join('')
+                            : '<span class="no-drops">No known drops</span>'}
+                    </div>
+                </div>
+            `;
+
+            // Try to load sprite
+            tryLoadSprite(monster);
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function tryLoadSprite(monster) {
+            const container = document.getElementById('spriteContainer');
+            const img = document.getElementById('spriteImg');
+
+            // Possible sprite paths to try (ID and name, jpg and png)
+            const basePath = 'data/sprites/';
+            const possiblePaths = [
+                `${basePath}${monster.id}.jpg`,
+                `${basePath}${monster.id}.png`,
+                `${basePath}${monster.name}.jpg`,
+                `${basePath}${monster.name}.png`,
+                `${basePath}${monster.name.toLowerCase()}.jpg`,
+                `${basePath}${monster.name.toLowerCase()}.png`,
+            ];
+
+            let currentIndex = 0;
+
+            function tryNext() {
+                if (currentIndex >= possiblePaths.length) {
+                    // No sprite found, hide container
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                img.onload = function() {
+                    // Sprite loaded successfully, show it
+                    container.classList.remove('hidden');
+                };
+
+                img.onerror = function() {
+                    // Try next path
+                    currentIndex++;
+                    tryNext();
+                };
+
+                img.src = possiblePaths[currentIndex];
+            }
+
+            tryNext();
+        }
+
+        function showListView(pushState = true) {
+            // Update URL
+            if (pushState) {
+                history.pushState({}, '', window.location.pathname);
+            }
+
+            // Update page title
+            document.title = 'Yugen Saga - Monster Database';
+
+            // Show list, hide detail
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('detailView').classList.remove('active');
         }
     </script>
 </body>
