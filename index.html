@@ -479,157 +479,6 @@
             font-family: 'Consolas', monospace;
         }
 
-        /* Compare Feature */
-        .compare-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #252342;
-            border-top: 2px solid #3d3a5c;
-            padding: 15px 20px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            z-index: 200;
-        }
-
-        .compare-bar.active {
-            display: flex;
-        }
-
-        .compare-slot {
-            background-color: #2a2845;
-            border: 2px dashed #3d3a5c;
-            border-radius: 8px;
-            padding: 10px 20px;
-            min-width: 150px;
-            text-align: center;
-            color: #8a8a9a;
-        }
-
-        .compare-slot.filled {
-            border-style: solid;
-            border-color: #d4a574;
-            color: #c9a86c;
-        }
-
-        .compare-slot .remove {
-            margin-left: 10px;
-            color: #c87878;
-            cursor: pointer;
-        }
-
-        .compare-btn {
-            padding: 12px 30px;
-            font-size: 14px;
-            background-color: #d4a574;
-            color: #252342;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .compare-btn:hover {
-            background-color: #e8c8a4;
-        }
-
-        .compare-btn:disabled {
-            background-color: #5a5a6a;
-            color: #8a8a9a;
-            cursor: not-allowed;
-        }
-
-        .add-compare-btn {
-            padding: 6px 12px;
-            font-size: 11px;
-            background-color: transparent;
-            color: #d4a574;
-            border: 1px solid #d4a574;
-            border-radius: 15px;
-            cursor: pointer;
-            font-family: inherit;
-            margin-left: 10px;
-            transition: all 0.2s;
-        }
-
-        .add-compare-btn:hover {
-            background-color: #d4a574;
-            color: #252342;
-        }
-
-        .add-compare-btn.added {
-            background-color: #4a5a4a;
-            border-color: #4a5a4a;
-            color: #a8c8a8;
-        }
-
-        /* Compare View */
-        .compare-view {
-            display: none;
-        }
-
-        .compare-view.active {
-            display: block;
-        }
-
-        .compare-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .compare-monster {
-            background-color: rgba(37, 35, 66, 0.9);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid #3d3a5c;
-        }
-
-        .compare-monster h3 {
-            color: #d4a574;
-            font-size: 1.5em;
-            margin-bottom: 20px;
-        }
-
-        .compare-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .compare-stat-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: #2a2845;
-            border-radius: 6px;
-        }
-
-        .compare-stat-row .label {
-            color: #8a8a9a;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-
-        .compare-stat-row .value {
-            color: #d4a574;
-            font-family: 'Consolas', monospace;
-            font-size: 1.1em;
-        }
-
-        .compare-stat-row .value.higher {
-            color: #a8c8a8;
-        }
-
-        .compare-stat-row .value.lower {
-            color: #c87878;
-        }
     </style>
 </head>
 <body>
@@ -721,31 +570,13 @@
             </div>
         </div>
 
-        <!-- Compare View -->
-        <div id="compareView" class="compare-view">
-            <button class="back-button" onclick="closeCompare()">
-                ← Back to List
-            </button>
-            <div id="compareContent">
-            </div>
-        </div>
     </main>
-
-    <!-- Compare Bar -->
-    <div id="compareBar" class="compare-bar">
-        <div class="compare-slot" id="compareSlot1">Select monster</div>
-        <span style="color: #8a8a9a;">vs</span>
-        <div class="compare-slot" id="compareSlot2">Select monster</div>
-        <button class="compare-btn" id="compareBtn" disabled onclick="showCompare()">Compare</button>
-        <button class="back-button" style="margin: 0; padding: 8px 16px;" onclick="clearCompare()">Clear</button>
-    </div>
 
     <script>
         const DATA_URL = 'data/monsters.json';
         let monsters = [];
         let lastUpdated = null;
         let currentSort = { field: 'name', dir: 'asc' };
-        let compareList = [];
 
         document.addEventListener('DOMContentLoaded', loadData);
 
@@ -1013,7 +844,7 @@
                 <div class="detail-section">
                     <h3>Locations (${monster.maps.length})</h3>
                     <div class="maps-list">
-                        ${monster.maps.map(map => `<span class="map-tag">${map}</span>`).join('')}
+                        ${monster.maps.map(map => `<span class="map-tag" onclick="showMapDetail('${map.replace(/'/g, "\\'")}')">${map}</span>`).join('')}
                     </div>
                 </div>
 
@@ -1084,9 +915,49 @@
             // Update page title
             document.title = 'Yugen Saga - Monster Database';
 
-            // Show list, hide detail
+            // Show list, hide all detail views
             document.getElementById('listView').classList.remove('hidden');
             document.getElementById('detailView').classList.remove('active');
+            document.getElementById('mapDetailView').classList.remove('active');
+        }
+
+        function showMapDetail(mapName, pushState = true) {
+            // Find all monsters on this map
+            const mapMonsters = monsters.filter(m => m.maps.includes(mapName));
+
+            // Update URL
+            if (pushState) {
+                history.pushState({ mapName }, '', `?map=${encodeURIComponent(mapName)}`);
+            }
+
+            // Update page title
+            document.title = `${mapName} - Yugen Saga Monster Database`;
+
+            // Hide list and monster detail, show map detail
+            document.getElementById('listView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('active');
+            document.getElementById('mapDetailView').classList.add('active');
+
+            // Render map detail
+            document.getElementById('mapDetail').innerHTML = `
+                <h2>${mapName}</h2>
+                <p style="color: #a8a8b8; margin-bottom: 20px;">${mapMonsters.length} monsters on this map</p>
+                <div class="map-monsters-grid">
+                    ${mapMonsters.map(m => `
+                        <div class="map-monster-card" onclick="showMonsterDetail(${m.id})">
+                            <div class="name">${m.name}</div>
+                            <div class="stats">
+                                <span>Lv ${m.level}</span>
+                                <span>HP ${m.hp.toLocaleString()}</span>
+                                <span>EXP ${parseInt(m.exp).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // Scroll to top
+            window.scrollTo(0, 0);
         }
     </script>
 </body>
